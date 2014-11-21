@@ -54,6 +54,7 @@ import servicelogger
 
 dy_import_module_symbols("signeddata.r2py")
 dy_import_module_symbols("sha.r2py")
+dy_import_module_symbols("time.r2py")
 
 # Armon: The port that should be used to update our time using NTP
 TIME_PORT = 51234
