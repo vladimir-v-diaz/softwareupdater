@@ -62,11 +62,6 @@ signeddata = dy_import_module('signeddata.r2py')
 sha = dy_import_module('sha.r2py')
 time = dy_import_module('time.r2py')
 
-
-dy_import_module_symbols("signeddata.r2py")
-dy_import_module_symbols("sha.r2py")
-dy_import_module_symbols("time.r2py")
-
 # Armon: The port that should be used to update our time using NTP
 TIME_PORT = 51234
 TIME_PORT_2 = 42345
