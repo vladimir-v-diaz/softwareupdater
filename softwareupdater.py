@@ -1,20 +1,22 @@
-""" 
-Author: Justin Cappos
-
-Start Date: August 4, 2008
-
-Description:
-A software updater for the node manager.   The focus is to make it secure, 
-robust, and simple (in that order).
-
-Usage:  ./softwareupdater.py
-
-
-Updated 1/23/2009 use servicelogger to log errors - Xuanhua (Sean)s Ren
-
-
 """
+<Program Name>
+  softwareupdater.py
 
+<Started>
+  August 4, 2008.
+  
+  Updated January 23, 2009.
+    Use servicelogger to log errors - Xuanhua (Sean)s Ren
+
+<Authors>
+  Justin Cappos.
+
+<Purpose>
+  A software updater for the node manager.   The focus is to make it secure,
+  robust, and simple (in that order).
+  
+  Usage:  ./softwareupdater.py
+"""
 
 
 import sys
@@ -30,9 +32,10 @@ except ImportError:
 
 import daemon
 
-
-# this is being done so that the resources accounting doesn't interfere with logging
+# This is being done so that the resources accounting doesn't interfere with
+# logging.
 from repyportability import *
+
 _context = locals()
 add_dy_support(_context)
 
@@ -50,6 +53,14 @@ import portable_popen
 
 # Import servicelogger to do logging
 import servicelogger
+
+# VLAD: Use dy_import_module().  Previous import statements used
+# dy_import_module_symbols() and imported all of the module's names into
+# the local namespace, which can potentially lead to name clashes.  It also
+# decreased readability because a function's origin was not apparent.
+signeddata = dy_import_module('signeddata.r2py')
+sha = dy_import_module('sha.r2py')
+time = dy_import_module('time.r2py')
 
 
 dy_import_module_symbols("signeddata.r2py")
@@ -152,7 +163,7 @@ def get_file_hash(filename):
   filedata = fileobj.read()
   fileobj.close()
 
-  return sha_hexhash(filedata)
+  return sha.sha_hexhash(filedata)
 
 
 
@@ -296,7 +307,8 @@ def do_rsync(serverpath, destdir, tempdir):
   newmetafileobject.close()
 
   # Incorrectly signed, we don't update...
-  if not signeddata_issignedcorrectly(newmetafiledata, softwareupdatepublickey):
+  if not signeddata.signeddata_issignedcorrectly(newmetafiledata,
+                                                 softwareupdatepublickey):
     safe_log("[do_rsync] New metainfo not signed correctly. Not updating.")
     return []
 
@@ -312,10 +324,10 @@ def do_rsync(serverpath, destdir, tempdir):
   else:
     try:
       # Armon: Update our time via NTP, before we check the meta info
-      time_updatetime(TIME_PORT)
+      time.time_updatetime(TIME_PORT)
     except Exception:
       try:
-        time_updatetime(TIME_PORT_2)
+        time.time_updatetime(TIME_PORT_2)
       except Exception:
         # Steven: Sometimes we can't successfully update our time, so this is
         # better than generating a traceback.
@@ -323,8 +335,9 @@ def do_rsync(serverpath, destdir, tempdir):
         return []
     
     # they're both good.   Let's compare them...
-    shoulduse, reasons = signeddata_shouldtrust(oldmetafiledata,newmetafiledata,softwareupdatepublickey)
-
+    shoulduse, reasons = \
+      signeddata.signeddata_shouldtrust(oldmetafiledata, newmetafiledata,
+                                        softwareupdatepublickey)
     if shoulduse == True:
       # great!   All is well...
       pass
@@ -351,13 +364,13 @@ def do_rsync(serverpath, destdir, tempdir):
         # we should distrust. - Brent
         reasons.remove('Public keys do not match')
         for comment in reasons:
-          if comment in signeddata_fatal_comments:
+          if comment in signeddata.signeddata_fatal_comments:
             # If there is a different fatal comment still there, still log it
             # and don't perform the update.
             safe_log("[do_rsync] Serious problem with signed metainfo: " + str(reasons))
             return []
             
-          if comment in signeddata_warning_comments:
+          if comment in signeddata.signeddata_warning_comments:
             # If there is a different warning comment still there, log the
             # warning.  We will take care of specific behavior shortly.
             safe_log("[do_rsync] " + str(comment))
